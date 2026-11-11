@@ -1,12 +1,10 @@
 
-#!/usr/bin/env python3
 """Payment reconciliation."""
 
 import json
 from datetime import datetime
 from decimal import Decimal
 
-# Store the latest event for each transaction ID
 latest_events = {}
 
 with open("payments.jsonl", "r", encoding="utf-8") as f:
@@ -14,21 +12,17 @@ with open("payments.jsonl", "r", encoding="utf-8") as f:
         try:
             event = json.loads(line)
         except json.JSONDecodeError:
-            # Ignore unreadable lines
             continue
 
-        # Ignore events without a transaction ID
         if not isinstance(event, dict) or not event.get("txn_id"):
             continue
 
         txn_id = event["txn_id"]
 
-        # Convert the timestamp into a comparable datetime
         timestamp = datetime.fromisoformat(
             event["ts"].replace("Z", "+00:00")
         )
 
-        # Keep only the latest attempt for each transaction
         if (
             txn_id not in latest_events
             or timestamp >= latest_events[txn_id]["timestamp"]
@@ -38,7 +32,6 @@ with open("payments.jsonl", "r", encoding="utf-8") as f:
                 "event": event
             }
 
-# Calculate successful payments using only the latest attempts
 total = Decimal("0")
 count = 0
 
@@ -50,7 +43,6 @@ for record in latest_events.values():
         total += amount
         count += 1
 
-# Compare with the expected payment count
 with open("expected.txt", "r", encoding="utf-8") as f:
     expected = int(f.read().strip())
 
